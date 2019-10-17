@@ -7,6 +7,33 @@ class Sudoku(object):
         self.puzzle = puzzle # self.puzzle is a list of lists
         self.ans = copy.deepcopy(puzzle) # self.ans is a list of lists
 
+    def num_conflicts(self, x, y):
+        sum = 0
+        # check horizontal case
+        for j in range(9):
+            if j == x:
+                continue
+            if self.puzzle[y][j] == self.puzzle[y][x]:
+                sum += 1
+        # check vertical case
+        for i in range(9):
+            if i == y:
+                continue
+            if self.puzzle[i][x] == self.puzzle[y][x]:
+                sum += 1
+        # check 3x3 case
+        y_boxnum = y//3
+        x_boxnum = x//3
+        y_start = y_boxnum * 3
+        x_start = x_boxnum * 3
+        for i in range(y_start, y_start+3):
+            for j in range(x_start, x_start+3):
+                if i == y and j == x:
+                    continue
+                if self.puzzle[i][j] == self.puzzle[y][x]:
+                    sum += 1
+        return sum
+
     def solve(self):
         #TODO: Your code here
 
