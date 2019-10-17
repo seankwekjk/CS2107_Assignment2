@@ -8,7 +8,7 @@ class Sudoku(object):
         self.puzzle = puzzle # self.puzzle is a list of lists
         self.ans = copy.deepcopy(puzzle) # self.ans is a list of lists
 
-    def num_conflicts(self, x, y):
+    def num_conflicts(self, y, x):
         sum = 0
         # check horizontal case
         for j in range(9):
@@ -33,6 +33,13 @@ class Sudoku(object):
                     continue
                 if self.puzzle[i][j] == self.puzzle[y][x]:
                     sum += 1
+        return sum
+
+    def total_conflicts(self):
+        sum = 0
+        for i in range(9):
+            for j in range(9):
+                sum += self.num_conflicts(i, j)
         return sum
 
     def solve(self):
