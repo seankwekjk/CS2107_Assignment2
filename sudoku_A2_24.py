@@ -1,5 +1,6 @@
 import sys
 import copy
+from random import randint
 
 class Sudoku(object):
     def __init__(self, puzzle):
@@ -36,6 +37,15 @@ class Sudoku(object):
 
     def solve(self):
         #TODO: Your code here
+
+        given_vals = set()
+        for i in range(9):
+            for j in range(9):
+                if self.puzzle[i][j] != 0:
+                    given_vals.add((i, j))
+                else:
+                    self.puzzle[i][j] = randint(1, 9)
+
 
         # don't print anything here. just resturn the answer
         # self.ans is a list of lists
