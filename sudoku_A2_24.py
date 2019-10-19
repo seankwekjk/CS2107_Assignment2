@@ -1,7 +1,7 @@
 import sys
 import copy
-from random import randint
-import heapq
+import random
+import heapq as pq
 """
 variables = {(i, j):domain[(i, j)]}
 domains = {(i, j):[0:9]}
@@ -18,15 +18,16 @@ class Sudoku(object):
         self.ans = copy.deepcopy(puzzle) # self.ans is a list of lists
         self.domains = {}
         self.given_vals = set()
-        self.target_vals = set()
+        self.target_vals = []
+        self.numIters = 0
         
         for i in range(9):
             for j in range(9):
                 if self.puzzle[i][j] != 0:
                     self.given_vals.add((i, j))
                 else:
-                    self.puzzle[i][j] = randint(1, 9)
-                    self.target_vals.add((i, j))
+                    self.ans[i][j] = random.randint(1, 9)
+                    self.target_vals.append((i, j))
         for target in self.target_vals:
             newSet = set()
             for i in range(1, 10):
@@ -36,20 +37,19 @@ class Sudoku(object):
     # For trying out a value and checking the num
     # of conflicts without it being assigned to the
     # puzzle yet
-    """
     def num_conflicts_for_val(self, y, x, val):
         sum = 0
         # check horizontal case
         for j in range(9):
             if j == x:
                 continue
-            if self.puzzle[y][j] == val:
+            if self.ans[y][j] == val:
                 sum += 1
         # check vertical case
         for i in range(9):
             if i == y:
                 continue
-            if self.puzzle[i][x] == val:
+            if self.ans[i][x] == val:
                 sum += 1
         # check 3x3 case
         y_boxnum = y//3
@@ -60,23 +60,23 @@ class Sudoku(object):
             for j in range(x_start, x_start+3):
                 if i == y and j == x:
                     continue
-                if self.puzzle[i][j] == val:
+                if self.ans[i][j] == val:
                     sum += 1
         return sum
-    """
+
     def num_conflicts(self, y, x):
         sum = 0
         # check horizontal case
         for j in range(9):
             if j == x:
                 continue
-            if self.puzzle[y][j] == self.puzzle[y][x]:
+            if self.ans[y][j] == self.ans[y][x]:
                 sum += 1
         # check vertical case
         for i in range(9):
             if i == y:
                 continue
-            if self.puzzle[i][x] == self.puzzle[y][x]:
+            if self.ans[i][x] == self.ans[y][x]:
                 sum += 1
         # check 3x3 case
         y_boxnum = y//3
@@ -87,7 +87,7 @@ class Sudoku(object):
             for j in range(x_start, x_start+3):
                 if i == y and j == x:
                     continue
-                if self.puzzle[i][j] == self.puzzle[y][x]:
+                if self.ans[i][j] == self.ans[y][x]:
                     sum += 1
         return sum
 
@@ -115,7 +115,6 @@ class Sudoku(object):
                 else:
                     if conflict_val in self.domains[grid]:
                         self.domains[grid].remove(conflict_val)
-                print
 
             # Reduce column
             for i in range(9):
@@ -152,22 +151,38 @@ class Sudoku(object):
                 row = target_grid[0]
                 col = target_grid[1]
                 final_val = self.domains[target_grid].pop()
-                self.puzzle[row][col] = final_val
+                self.ans[row][col] = final_val
                 toTransfer.add(target_grid)
         for fixed_grid in toTransfer:
             self.domains.pop(fixed_grid)
             self.target_vals.remove(fixed_grid)
             self.given_vals.add(fixed_grid)
+
         return changed
 
-    def isSolution(self):
+    def is_solution(self):
         return self.total_conflicts == 0
 
-    def getRandomVar(self):
-        pass
+    def get_random_var(self):
+        numVars = len(self.target_vals)
+        randIdx = random.randint(0, numVars - 1)
+        return self.target_vals[randIdx]
+
+    def get_min_conflict_val(self, randVar):
+        domain = self.domains[randVar]
+        valHeap = []
+        row = randVar[0]
+        col = randVar[1]
+        for val in domain:
+            numConflicts = self.num_conflicts_for_val(row, col, val)
+            pq.heappush(valHeap, (numConflicts, val))
+        minConflictValTup = pq.heappop(valHeap)
+        minConflictVal = minConflictValTup[1]
+        return minConflictVal
 
     def solve(self):
         #TODO: Your code here
+        print "STARTING NUM CONFLICTS: ", self.total_conflicts()
         cont = True
         while cont:
             if DEBUG:
@@ -187,22 +202,27 @@ class Sudoku(object):
 
         # Main min-conflicts algorithm
         for iter in range(MAX_ITER):
-            if self.isSolution():
+            self.numIters += 1
+            if self.is_solution():
                 break
 
-            currVar = self.getRandomVar();
+            randVar = self.get_random_var()
+            minConflictVal = self.get_min_conflict_val(randVar)
+            row = randVar[0]
+            col = randVar[1]
+            self.ans[row][col] = minConflictVal
 
-            # set value ← the value v for var that minimizes CONFLICTS(var,v,current_state,csp)
-            # set var ← value in current_state
+            # set value <- the value v for var that minimizes CONFLICTS(var,v,current_state,csp)
+            # set var <- value in current_state
 
         # don't print anything here. just resturn the answer
         # self.ans is a list of lists
-        #return self.ans
-        return self.puzzle
+        return self.ans
 
     # you may add more classes/functions if you think is useful
     # However, ensure all the classes/functions are in this file ONLY
 
+# Auxiliary print  method
 def printPuzzle(puzzle):
     # print ans in console
     for i in range(9):
@@ -237,14 +257,29 @@ if __name__ == "__main__":
                     j = 0
 
     printPuzzle(puzzle)
+    print
 
     sudoku = Sudoku(puzzle)
     ans = sudoku.solve()
 
-    printPuzzle(sudoku.puzzle)
+    printPuzzle(ans)
+    print "total num of iterations:", sudoku.numIters
+    print "total num of conflicts remaining", sudoku.total_conflicts()
 
     with open(sys.argv[2], 'a') as f:
         for i in range(9):
             for j in range(9):
                 f.write(str(ans[i][j]) + " ")
             f.write("\n")
+
+"""
+8 1 2 7 5 3 6 4 9
+9 4 3 6 8 2 1 7 5
+6 7 5 4 9 1 2 8 3
+1 5 4 2 3 7 8 9 6
+3 6 9 8 4 5 7 2 1
+2 8 7 1 6 9 5 3 4
+5 2 1 9 7 4 3 6 8
+4 3 8 5 2 6 9 1 7
+7 9 6 3 1 8 4 5 2
+"""
