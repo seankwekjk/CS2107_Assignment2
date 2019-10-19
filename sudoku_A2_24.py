@@ -2,15 +2,8 @@ import sys
 import copy
 import random
 import heapq as pq
-"""
-variables = {(i, j):domain[(i, j)]}
-domains = {(i, j):[0:9]}
-minConflictVars = heapq([((i, j), numConflicts)])
-"""
 
-REDUCTION_DEBUG = False
-MIN_CONFLICT_DEBUG = True
-MAX_ITER = 1000
+PRINT = False
 
 class Sudoku(object):
     def __init__(self, puzzle):
@@ -20,14 +13,12 @@ class Sudoku(object):
         self.domains = {}
         self.given_vals = set()
         self.target_vals = []
-        self.numIters = 0
         
         for i in range(9):
             for j in range(9):
                 if self.puzzle[i][j] != 0:
                     self.given_vals.add((i, j))
                 else:
-                    self.ans[i][j] = random.randint(1, 9)
                     self.target_vals.append((i, j))
         for target in self.target_vals:
             newSet = set()
@@ -158,68 +149,48 @@ class Sudoku(object):
             self.domains.pop(fixed_grid)
             self.target_vals.remove(fixed_grid)
             self.given_vals.add(fixed_grid)
-
         return changed
 
-    def is_solution(self):
-        return self.total_conflicts == 0
+    def is_complete(self):
+        for i in range(9):
+            for j in range(9):
+                if self.ans[i][j] == 0:
+                    return False
+        return True
 
-    def get_random_var(self):
-        numVars = len(self.target_vals)
-        randIdx = random.randint(0, numVars - 1)
-        return self.target_vals[randIdx]
+    def get_next_zero_var(self):
+        for var in self.target_vals:
+            if self.ans[var[0]][var[1]] == 0:
+                return var
 
-    def get_min_conflict_val(self, randVar):
-        domain = self.domains[randVar]
-        valHeap = []
-        row = randVar[0]
-        col = randVar[1]
-        for val in domain:
-            numConflicts = self.num_conflicts_for_val(row, col, val)
-            pq.heappush(valHeap, (numConflicts, val))
-        minConflictValTup = pq.heappop(valHeap)
-        minConflictVal = minConflictValTup[1]
-        if MIN_CONFLICT_DEBUG:
-            print randVar, valHeap
-            print
-        return minConflictVal
+    def backtrack_search(self):
+        if self.is_complete():
+            return True
+
+        currVar = self.get_next_zero_var()
+        currDom = self.domains[currVar]
+        row = currVar[0]
+        col = currVar[1]
+
+        for val in currDom:
+            if self.num_conflicts_for_val(row, col, val) == 0:
+                self.ans[row][col] = val
+                result = self.backtrack_search()
+                if result:
+                    return result
+                self.ans[row][col] = 0
 
     def solve(self):
         #TODO: Your code here
-        print "STARTING NUM CONFLICTS: ", self.total_conflicts()
+        if PRINT:
+            print "STARTING NUM CONFLICTS: ", self.total_conflicts()
+
         cont = True
         while cont:
-            if REDUCTION_DEBUG:
-                print"==================================="
-                print len(self.given_vals), len(self.target_vals)
-                for var in sudoku.target_vals:
-                    print var, sudoku.domains[var]
-                print"==================================="
-
             self.reduce_domains()
             cont = self.set_singles()
-        
-        if REDUCTION_DEBUG:
-            print len(self.given_vals), len(self.target_vals)
-            for var in sudoku.target_vals:
-                print var, sudoku.domains[var]
 
-        # Main min-conflicts algorithm
-        for iter in range(MAX_ITER):
-            self.numIters += 1
-            if self.is_solution():
-                break
-            while True:
-                randVar = self.get_random_var()
-                if self.num_conflicts(randVar[0], randVar[1]) != 0:
-                    break
-            minConflictVal = self.get_min_conflict_val(randVar)
-            row = randVar[0]
-            col = randVar[1]
-            self.ans[row][col] = minConflictVal
-
-            # set value <- the value v for var that minimizes CONFLICTS(var,v,current_state,csp)
-            # set var <- value in current_state
+        self.backtrack_search()
 
         # don't print anything here. just resturn the answer
         # self.ans is a list of lists
@@ -262,30 +233,19 @@ if __name__ == "__main__":
                     i += 1
                     j = 0
 
-    printPuzzle(puzzle)
-    print
+    if PRINT:
+        printPuzzle(puzzle)
+        print
 
     sudoku = Sudoku(puzzle)
     ans = sudoku.solve()
 
-    printPuzzle(ans)
-    print "total num of iterations:", sudoku.numIters
-    print "total num of conflicts remaining", sudoku.total_conflicts()
+    if PRINT:
+        printPuzzle(ans)
+        print "total num of conflicts remaining", sudoku.total_conflicts()
 
     with open(sys.argv[2], 'a') as f:
         for i in range(9):
             for j in range(9):
                 f.write(str(ans[i][j]) + " ")
             f.write("\n")
-
-"""
-8 1 2 7 5 3 6 4 9
-9 4 3 6 8 2 1 7 5
-6 7 5 4 9 1 2 8 3
-1 5 4 2 3 7 8 9 6
-3 6 9 8 4 5 7 2 1
-2 8 7 1 6 9 5 3 4
-5 2 1 9 7 4 3 6 8
-4 3 8 5 2 6 9 1 7
-7 9 6 3 1 8 4 5 2
-"""
