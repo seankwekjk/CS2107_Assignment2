@@ -8,7 +8,8 @@ domains = {(i, j):[0:9]}
 minConflictVars = heapq([((i, j), numConflicts)])
 """
 
-DEBUG = False
+REDUCTION_DEBUG = False
+MIN_CONFLICT_DEBUG = True
 MAX_ITER = 1000
 
 class Sudoku(object):
@@ -178,6 +179,9 @@ class Sudoku(object):
             pq.heappush(valHeap, (numConflicts, val))
         minConflictValTup = pq.heappop(valHeap)
         minConflictVal = minConflictValTup[1]
+        if MIN_CONFLICT_DEBUG:
+            print randVar, valHeap
+            print
         return minConflictVal
 
     def solve(self):
@@ -185,7 +189,7 @@ class Sudoku(object):
         print "STARTING NUM CONFLICTS: ", self.total_conflicts()
         cont = True
         while cont:
-            if DEBUG:
+            if REDUCTION_DEBUG:
                 print"==================================="
                 print len(self.given_vals), len(self.target_vals)
                 for var in sudoku.target_vals:
@@ -195,7 +199,7 @@ class Sudoku(object):
             self.reduce_domains()
             cont = self.set_singles()
         
-        if DEBUG:
+        if REDUCTION_DEBUG:
             print len(self.given_vals), len(self.target_vals)
             for var in sudoku.target_vals:
                 print var, sudoku.domains[var]
@@ -205,8 +209,10 @@ class Sudoku(object):
             self.numIters += 1
             if self.is_solution():
                 break
-
-            randVar = self.get_random_var()
+            while True:
+                randVar = self.get_random_var()
+                if self.num_conflicts(randVar[0], randVar[1]) != 0:
+                    break
             minConflictVal = self.get_min_conflict_val(randVar)
             row = randVar[0]
             col = randVar[1]
