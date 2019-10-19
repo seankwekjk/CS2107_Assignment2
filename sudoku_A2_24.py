@@ -1,3 +1,10 @@
+"""
+CS3243 Assignment 2 (Sudoku)
+Members:
+    Benn Tay Guobin | A0167647N
+    Kwek Jun Kai Sean | A0155565X
+"""
+
 import sys
 import copy
 import random
@@ -92,7 +99,7 @@ class Sudoku(object):
 
     # Based on the current fixed values in the puzzle,
     # domains of affected cells in the same row/column/subgrid
-    # are reduced.
+    # are reduced. Prunes the search tree.
     def reduce_domains(self,):
         for givenGrid in self.given_vals:
             row = givenGrid[0]
