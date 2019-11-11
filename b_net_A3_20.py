@@ -1,3 +1,10 @@
+"""
+CS3243 Assignment 3 (Bayesian Network)
+Members:
+    Benn Tay Guobin | A0167647N
+    Kwek Jun Kai Sean | A0155565X
+"""
+
 import sys
 import json
 
