@@ -73,11 +73,78 @@ class BayesianNetwork(object):
         # for the given example:
         # self.answer = [{"index": 1, "answer": 0.01}, {"index": 2, "answer": 0.71}]
         # the format of the answer returned SHOULD be as shown above.
+        
+        # Display all the given attributes plsu constructed network
+        #self.displayAttr()
+        
+        for query in self.queries:
+            intIndex = query["index"]
+            givenDic = query["given"]
+            targetKey = query["tofind"].items()[0][0]
+            targetVal = query["tofind"].items()[0][1]
+            targetNode = self.network[targetKey]
+            probAns = 0
+
+            # Check node to get ans
+            targetNodeTablesLst = targetNode["Tables"]
+            for targetNodeTablesDic in targetNodeTablesLst:
+                found = False
+                if targetNodeTablesDic["own_value"] == targetVal:
+                    found = True
+                    for k, v in givenDic.items():
+                        if targetNodeTablesDic[k] != v:
+                            found = False
+                if found:
+                    probAns = targetNodeTablesDic["probability"]
+                    dicAns = {}
+                    dicAns["index"] = intIndex
+                    dicAns["answer"] = probAns
+                    self.answer.append(dicAns)
+                    break
+
         return self.answer
 
     # You may add more classes/functions if you think is useful. However, ensure
     # all the classes/functions are in this file ONLY and used within the
     # BayesianNetwork class.
+
+    # Auxiliary function for displaying attributes and network
+    def displayAttr(self):
+        print "============VARIABLES============"
+        #print self.variables
+        for k in self.variables:
+            print k, self.variables[k]
+            print
+        print
+        print "============DEPENDENCIES============"
+        #print self.dependencies
+        for k in self.dependencies:
+            print k, self.dependencies[k]
+            print
+        print
+        print "============CONDITIONAL PROBABILITIES============"
+        #print self.conditional_probabilities
+        for k in self.conditional_probabilities:
+            print k, self.conditional_probabilities[k]
+            print
+        print
+        print "============PRIOR PROBABILITES============"
+        #print self.prior_probabilities
+        for k in self.prior_probabilities:
+            print k, self.prior_probabilities[k]
+            print
+        print
+        print "============QUERIES============"
+        #print self.queries
+        for k in self.queries:
+            print k#, self.queries[k]
+            print
+        print
+        print "============NETWORK============"
+        #print self.network
+        for k in self.network:
+            print k, self.network[k]
+            print
 
 
 def main():
@@ -111,7 +178,7 @@ def main():
     b_network = BayesianNetwork(structure, values, queries)
     b_network.construct()
     answers = b_network.infer()
-
+    #print answers
 
 
 if __name__ == "__main__":
