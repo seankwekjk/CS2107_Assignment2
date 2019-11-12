@@ -1,3 +1,10 @@
+"""
+CS3243 Assignment 3 (Bayesian Network)
+Members:
+    Benn Tay Guobin | A0167647N
+    Kwek Jun Kai Sean | A0155565X
+"""
+
 import sys
 import json
 
@@ -18,8 +25,9 @@ class BayesianNetwork(object):
         for name, vals in self.variables.items():
             # initialise each node as a dict
             self.network[name] = {}
-            # initialise value dict of each node, corresponding value will hold probability
+            # initialise value dict & probability table of each node, corresponding value will hold probability
             self.network[name]["Values"] = {}
+            self.network[name]["Table"] = []
             for index in vals:
                 self.network[name]["Values"][index] = 0  # initialise as 0
             # initialise dependency list of each node, replace with populated list in next loop
@@ -31,6 +39,7 @@ class BayesianNetwork(object):
                 self.network[name]["Values"][inner_name] = inner_vals
         # print(self.network)
         for name, vals in self.conditional_probabilities.items():
+            self.network[name]["Tables"] = vals
             temp_dict = {}
             # create list in temp_dict for each discrete value of name
             for key in self.network[name]["Values"].keys():
@@ -73,7 +82,6 @@ class BayesianNetwork(object):
 
 def main():
     # STRICTLY do NOT modify the code in the main function here
-    '''
     if len(sys.argv) != 4:
         print ("\nUsage: python b_net_A3_xx.py structure.json values.json queries.json \n")
         raise ValueError("Wrong number of arguments!")
@@ -86,6 +94,7 @@ def main():
     structure_filename = "structure.json"
     values_filename = "values.json"
     queries_filename = "queries.json"
+    '''
 
     try:
         with open(structure_filename, 'r') as f:
