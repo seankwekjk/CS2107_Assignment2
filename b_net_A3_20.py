@@ -78,6 +78,7 @@ class BayesianNetwork(object):
         #self.displayAttr()
         
         for query in self.queries:
+            ansGiven = False
             intIndex = query["index"]
             givenDic = query["given"]
             targetKey = query["tofind"].items()[0][0]
@@ -85,22 +86,63 @@ class BayesianNetwork(object):
             targetNode = self.network[targetKey]
             probAns = 0
 
-            # Check node to get ans
-            targetNodeTablesLst = targetNode["Tables"]
-            for targetNodeTablesDic in targetNodeTablesLst:
-                found = False
-                if targetNodeTablesDic["own_value"] == targetVal:
-                    found = True
-                    for k, v in givenDic.items():
-                        if targetNodeTablesDic[k] != v:
-                            found = False
-                if found:
-                    probAns = targetNodeTablesDic["probability"]
-                    dicAns = {}
-                    dicAns["index"] = intIndex
-                    dicAns["answer"] = probAns
-                    self.answer.append(dicAns)
-                    break
+            if any(givenDic):
+                # check if given nodes are parents
+                inverseCase = False
+                regCase = False
+                dependencyList = targetNode["Dependencies"]
+                for given in givenDic.keys():
+                    if given not in dependencyList:
+                        inverseCase = True
+                        break
+                if len(dependencyList) == len(givenDic):
+                    regCase = True
+
+                if inverseCase is True:
+                    givenDic = query["tofind"]
+                    targetKey = query["given"].items()[0][0]
+                    targetVal = query["given"].items()[0][1]
+                    targetNode = self.network[targetKey]
+
+                # Check node to get ans (reg case)
+                targetNodeTablesLst = targetNode["Tables"]
+                for targetNodeTablesDic in targetNodeTablesLst:
+                    found = False
+                    if targetNodeTablesDic["own_value"] == targetVal:
+                        found = True
+                        for k, v in givenDic.items():
+                            if targetNodeTablesDic[k] != v:
+                                found = False
+                    if found:
+                        dicAns = {}
+                        probAns = targetNodeTablesDic["probability"]
+                        # handle inverse case
+                        if inverseCase is True:
+                            key = givenDic.items()[0][0]
+                            name = givenDic.items()[0][1]
+                            mult = self.network[key]["Values"][name]
+                            div = targetNode["Values"][targetVal]
+                            probAns = (probAns * mult)/div
+                        dicAns["index"] = intIndex
+                        dicAns["answer"] = probAns
+                        self.answer.append(dicAns)
+                        ansGiven = True
+                        break
+
+            # Case of p(node)
+            else:
+                probAns = targetNode["Values"][targetVal]
+                dicAns = {}
+                dicAns["index"] = intIndex
+                dicAns["answer"] = probAns
+                self.answer.append(dicAns)
+                ansGiven = True
+
+            if ansGiven is False:
+                dicAns = {}
+                dicAns["index"] = intIndex
+                dicAns["answer"] = probAns
+                self.answer.append(dicAns)
 
         return self.answer
 
